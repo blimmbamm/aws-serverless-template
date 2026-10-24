@@ -71,6 +71,27 @@ infra         AWS CDK stack
 packages/db   Optional Prisma/Neon stub
 ```
 
-## CI later
+## CI / CD (GitHub Actions)
 
-Deploy is CLI-first (`npm run deploy`). A GitHub Actions workflow can call the same command later (OIDC → IAM role recommended).
+| Workflow | When | What |
+|---|---|---|
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | PRs + pushes (except `main`) | `npm ci`, build, `cdk synth` |
+| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | Push to `main` + manual dispatch | OIDC → `npm run deploy` |
+
+Deploy targets **`us-east-1`** (same region as the existing `ServerlessTemplateStack`). `CDKToolkit` bootstrap must already exist there (`npm run bootstrap` once).
+
+### One-time GitHub + AWS setup
+
+1. IAM OIDC provider: `https://token.actions.githubusercontent.com` (audience `sts.amazonaws.com`).
+2. IAM role trusted by GitHub OIDC for this repo/`main` (Console: Web identity → owner = your GitHub user, repo name, branch `main`).
+3. Attach deploy permissions (broad is fine to start; tighten later).
+4. GitHub repo → **Settings → Secrets and variables → Actions** → secret:
+   - `AWS_DEPLOY_ROLE_ARN` = role ARN
+
+Trust condition should look like:
+
+```text
+repo:blimmbamm/aws-serverless-template:ref:refs/heads/main
+```
+
+Local CLI deploy still works; CI is the default path for `main`.
