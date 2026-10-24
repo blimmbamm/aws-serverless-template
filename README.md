@@ -17,7 +17,7 @@ DB: optional (Neon / Postgres via DATABASE_URL) — default is in-memory dummy d
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - AWS CLI configured (`aws configure` or env credentials)
 - Sufficient IAM rights for CloudFormation / Lambda / S3 / CloudFront / Cognito / API Gateway
 
@@ -88,10 +88,10 @@ Deploy targets **`us-east-1`** (same region as the existing `ServerlessTemplateS
 4. GitHub repo → **Settings → Secrets and variables → Actions** → secret:
    - `AWS_DEPLOY_ROLE_ARN` = role ARN
 
-Trust condition should look like:
+Trust `sub` condition (GitHub includes numeric owner/repo IDs in the token — use a wildcard):
 
 ```text
-repo:blimmbamm/aws-serverless-template:ref:refs/heads/main
+repo:blimmbamm*/aws-serverless-template*:ref:refs/heads/main
 ```
 
 Local CLI deploy still works; CI is the default path for `main`.

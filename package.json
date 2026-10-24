@@ -19,6 +19,6 @@
     "bootstrap": "npm run bootstrap -w @app/infra"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }
