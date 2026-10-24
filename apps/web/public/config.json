@@ -1,0 +1,7 @@
+{
+  "apiBaseUrl": "",
+  "region": "eu-central-1",
+  "userPoolId": "",
+  "userPoolClientId": "",
+  "devAuth": true
+}

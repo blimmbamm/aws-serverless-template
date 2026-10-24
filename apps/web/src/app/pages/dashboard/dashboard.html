@@ -1,0 +1,20 @@
+<section class="page">
+  <h1>Dashboard</h1>
+  <p>Protected route — requires sign-in.</p>
+
+  @if (vm$ | async; as vm) {
+    @if (vm.error) {
+      <p class="error">{{ vm.error }}</p>
+    } @else if (vm.message === null) {
+      <p class="hello">Loading…</p>
+    } @else {
+      <p class="hello">{{ vm.message }}</p>
+    }
+  }
+
+  <p>
+    <a routerLink="/">Home</a>
+    ·
+    <a routerLink="/login" (click)="signOut()">Sign out</a>
+  </p>
+</section>

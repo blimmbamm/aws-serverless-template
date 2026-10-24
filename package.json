@@ -1,0 +1,24 @@
+{
+  "name": "aws-serverless-template",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "infra",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @app/api",
+    "dev:web": "npm run start -w @app/web",
+    "build": "npm run build -w @app/api && npm run build -w @app/web",
+    "build:api": "npm run build -w @app/api",
+    "build:web": "npm run build -w @app/web",
+    "synth": "npm run build:web && npm run synth -w @app/infra",
+    "diff": "npm run build:web && npm run diff -w @app/infra",
+    "deploy": "npm run build:web && npm run deploy -w @app/infra",
+    "destroy": "npm run destroy -w @app/infra",
+    "bootstrap": "npm run bootstrap -w @app/infra"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

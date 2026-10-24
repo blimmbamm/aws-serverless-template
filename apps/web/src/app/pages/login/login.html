@@ -1,0 +1,57 @@
+<section class="page">
+  @if (mode$ | async; as mode) {
+    <h1>{{ mode === 'signup' ? 'Sign up' : mode === 'confirm' ? 'Confirm' : 'Sign in' }}</h1>
+
+    @if (devAuth) {
+      <p class="hint">
+        Cognito is not configured yet — local dev auth is active. Any email works; password is ignored.
+      </p>
+    }
+
+    <form (ngSubmit)="submit()">
+      <label>
+        Email
+        <input name="email" type="email" [(ngModel)]="email" required autocomplete="username" />
+      </label>
+
+      @if (mode !== 'confirm') {
+        <label>
+          Password
+          <input
+            name="password"
+            type="password"
+            [(ngModel)]="password"
+            [required]="!devAuth"
+            autocomplete="current-password"
+          />
+        </label>
+      }
+
+      @if (mode === 'confirm') {
+        <label>
+          Confirmation code
+          <input name="code" [(ngModel)]="confirmCode" required />
+        </label>
+      }
+
+      @if (error$ | async; as error) {
+        <p class="error">{{ error }}</p>
+      }
+      @if (info$ | async; as info) {
+        <p class="info">{{ info }}</p>
+      }
+
+      <button type="submit">Continue</button>
+    </form>
+
+    <p class="switch">
+      @if (mode === 'signin') {
+        <a (click)="setMode('signup'); $event.preventDefault()" href="#">Create an account</a>
+      } @else {
+        <a (click)="setMode('signin'); $event.preventDefault()" href="#">Back to sign in</a>
+      }
+      ·
+      <a routerLink="/">Home</a>
+    </p>
+  }
+</section>

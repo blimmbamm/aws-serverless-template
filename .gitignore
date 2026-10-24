@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.angular/
+cdk.out/
+*.js.map
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage/
+.aws-sam/
+apps/web/src/assets/config.json
+infra/cdk.context.json

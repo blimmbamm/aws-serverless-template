@@ -1,0 +1,13 @@
+- Ziel: template für eine fullstack app mit einem express/nestjs backend (ggf. sogar andere technologie), einem frontend
+- Es soll nicht so laufen: lokale entwicklung mit dev-server so lange, bis man denkt: man könnte das jetzt mal deployen/hosten; sondern so: deployment ab tag 1
+- ich will iac und einen sehr geschmeidigen deployment-prozess, am besten per klick/pipeline
+- backend soll über aws lambda laufen, per serverless-http, oder ähnlichem. D.h., per entwicklung ein ganz normaler express server, betrieb aber serverless
+- frontend: erstmal angular (latest version)
+- das backend soll abgesichert sein, d.h. backend soll dediziert nur zum frontend kommunizieren dürfen 
+    - hosting ist mir noch unklar
+    - braucht man dafür sowas wie nginx/apache, ~ reverse proxy?
+    - geht das über api token oder eher über individuelle user tokens?
+- das frontend soll öffentliche bereiche haben, also solche die zugänglich ohne login sind aber auch solche, die einen user-login erfordern, um dann user-spezifische Sachen anzuzeigen
+- Das template soll dummy inhalt haben aber permanent laufen bei möglichst geringen Kosten (ich würde gerne ~ 0 Euro/monat anpeilen)
+- Datenbank soll erstmal über neondb laufen, da es dort einen guten free tier gibt; es soll aber natürlich dynamisch genug sein, um später andere Datenbank-Provider/Hoster zu benutze
+- ggf. braucht es für das template gar keine Datenbank

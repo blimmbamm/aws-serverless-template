@@ -1,0 +1,13 @@
+<section class="page">
+  <h1>About</h1>
+  <p>
+    This page is public — no login required. Protected routes live under
+    <code>/app</code> and call <code>/api/me</code> with a Cognito ID token
+    (or a local dev token).
+  </p>
+  <p>
+    The API origin is locked with a CloudFront custom header. That stops direct
+    Lambda/API Gateway calls without the secret; it does not stop calls through
+    your public domain.
+  </p>
+</section>

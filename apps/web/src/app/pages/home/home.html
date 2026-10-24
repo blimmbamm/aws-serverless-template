@@ -1,0 +1,29 @@
+<section class="page">
+  <h1>AWS Serverless Template</h1>
+  <p class="lead">
+    Angular frontend, Express on Lambda, CloudFront + Cognito — deployable from day one via CDK.
+  </p>
+  <p>
+    <a routerLink="/about">About</a>
+    ·
+    <a routerLink="/app">Dashboard</a>
+  </p>
+
+  <h2>Public API items</h2>
+  @if (vm$ | async; as vm) {
+    @if (vm.error) {
+      <p class="error">{{ vm.error }}</p>
+    } @else if (vm.items === null) {
+      <p>Loading…</p>
+    } @else {
+      <ul>
+        @for (item of vm.items; track item.id) {
+          <li>
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.description }}</span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

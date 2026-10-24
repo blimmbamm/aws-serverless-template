@@ -1,0 +1,16 @@
+// Rename to schema.prisma after `npx prisma init` / installing prisma.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Example model — replace with your domain
+// model Item {
+//   id          String @id @default(cuid())
+//   title       String
+//   description String
+// }

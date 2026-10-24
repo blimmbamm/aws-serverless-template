@@ -1,0 +1,10 @@
+{
+  "name": "@app/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Optional Prisma + Neon package. Not wired by default.",
+  "scripts": {
+    "generate": "echo \"Install prisma and run: npx prisma generate\"",
+    "migrate": "echo \"Install prisma and run: npx prisma migrate dev\""
+  }
+}
