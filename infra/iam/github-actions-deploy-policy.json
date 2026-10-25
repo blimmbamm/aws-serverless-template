@@ -1,0 +1,85 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CdkBootstrapVersion",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter"],
+      "Resource": "arn:aws:ssm:us-east-1:228686241906:parameter/cdk-bootstrap/hnb659fds/version"
+    },
+    {
+      "Sid": "AssumeCdkBootstrapRoles",
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": [
+        "arn:aws:iam::228686241906:role/cdk-hnb659fds-deploy-role-228686241906-us-east-1",
+        "arn:aws:iam::228686241906:role/cdk-hnb659fds-file-publishing-role-228686241906-us-east-1",
+        "arn:aws:iam::228686241906:role/cdk-hnb659fds-image-publishing-role-228686241906-us-east-1",
+        "arn:aws:iam::228686241906:role/cdk-hnb659fds-lookup-role-228686241906-us-east-1"
+      ]
+    },
+    {
+      "Sid": "PassCfnExecutionRole",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::228686241906:role/cdk-hnb659fds-cfn-exec-role-228686241906-us-east-1",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "cloudformation.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "CloudFormationDeploy",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:UpdateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:DescribeStackResources",
+        "cloudformation:DescribeStackResource",
+        "cloudformation:GetTemplate",
+        "cloudformation:GetTemplateSummary",
+        "cloudformation:ListStacks",
+        "cloudformation:ListStackResources",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:GetStackPolicy",
+        "cloudformation:ValidateTemplate"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:us-east-1:228686241906:stack/ServerlessTemplateStack/*",
+        "arn:aws:cloudformation:us-east-1:228686241906:stack/CDKToolkit/*"
+      ]
+    },
+    {
+      "Sid": "CloudFormationList",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:ListStacks",
+        "cloudformation:DescribeStacks",
+        "cloudformation:ValidateTemplate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CdkAssetsBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:GetBucketLocation",
+        "s3:ListBucket",
+        "s3:AbortMultipartUpload"
+      ],
+      "Resource": [
+        "arn:aws:s3:::cdk-hnb659fds-assets-228686241906-us-east-1",
+        "arn:aws:s3:::cdk-hnb659fds-assets-228686241906-us-east-1/*"
+      ]
+    }
+  ]
+}
