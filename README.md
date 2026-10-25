@@ -19,55 +19,109 @@ DB: optional (Neon / Postgres via DATABASE_URL) — default is in-memory dummy d
 
 - Node.js 22+
 - AWS CLI configured (`aws configure` or env credentials)
-- Sufficient IAM rights for CloudFormation / Lambda / S3 / CloudFront / Cognito / API Gateway
+- Sufficient IAM rights for CloudFormation / Lambda / S3 / CloudFront / Cognito / API Gateway / IAM (for first-time setup)
+- A GitHub repository (for CI)
 
-Region defaults to your AWS CLI region (`CDK_DEFAULT_REGION` / `AWS_REGION`), otherwise `eu-central-1`.
+## New project from this template
 
-## Quick start (CLI deploy)
+Greenfield checklist. The **first** AWS deploy and the GitHub↔AWS trust setup are always done with your own credentials (CLI/Console). CI cannot create its own OIDC role.
+
+### 1. Create the Git repo
+
+1. Use this repo as a GitHub template / fork / copy.
+2. Push to a **new** empty GitHub repository (note `OWNER/REPO` — you need it for the IAM trust policy).
+
+### 2. Align region (important)
+
+This template’s CI deploy is pinned to **`us-east-1`** in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) and [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Pick one region and keep it consistent:
+
+- AWS CLI default region **or** `AWS_REGION` / `CDK_DEFAULT_REGION`
+- Both workflow files
+- Later: account/region ARNs in [`infra/iam/github-actions-deploy-policy.json`](infra/iam/github-actions-deploy-policy.json)
+
+If you skip this, you can accidentally create a second stack in another region.
+
+Optional renames: stack id in [`infra/bin/app.ts`](infra/bin/app.ts) (`ServerlessTemplateStack`), IAM role/policy names — then update the deploy policy resources to match.
+
+### 3. Install and bootstrap CDK (once per account/region)
 
 ```bash
 npm install
-npm run bootstrap   # once per account/region (CDK bootstrap)
-npm run deploy      # builds Angular, then cdk deploy
+npm run bootstrap   # creates CDKToolkit (staging bucket, CDK roles, …)
 ```
 
-First deploy can take several minutes (CloudFront). CDK prints `CloudFrontUrl` when done — open that URL.
+### 4. First app deploy (local CLI)
 
-Create a user via **Sign in → Create an account** (Cognito email verification).
+```bash
+npm run deploy
+```
+
+Takes a few minutes (CloudFront). Note the `CloudFrontUrl` output. Create a user via **Sign in → Create an account** (Cognito email verification).
+
+### 5. GitHub Actions → AWS (OIDC), once per AWS account + repo
+
+These are **not** part of the app stack (on purpose). Documented artifacts live under [`infra/iam/`](infra/iam/).
+
+1. **OIDC identity provider** (skip if it already exists in this account)  
+   IAM → Identity providers → Add provider → OpenID Connect  
+   - URL: `https://token.actions.githubusercontent.com`  
+   - Audience: `sts.amazonaws.com`
+
+2. **IAM role** for Actions (e.g. `github-actions-serverless-template`)  
+   - Trusted entity: Web identity → that provider  
+   - GitHub “organization” = your **user or org** (`OWNER`), repository = `REPO`, branch = `main`  
+   - After create, edit **Trust relationships** so `sub` allows GitHub’s ID-suffixed claims, e.g.  
+     `repo:OWNER*/REPO*:ref:refs/heads/main`  
+     (exact `repo:OWNER/REPO:ref:refs/heads/main` often fails because GitHub sends `OWNER@id/REPO@id`)
+
+3. **Permissions** on that role  
+   - Fast path: attach `AdministratorAccess`, confirm CI works, then tighten.  
+   - Recommended: create customer policy from [`infra/iam/github-actions-deploy-policy.json`](infra/iam/github-actions-deploy-policy.json) (replace account id `228686241906` and region/`cdk-hnb659fds-…` ARNs with yours — see [`infra/iam/README.md`](infra/iam/README.md)).
+
+4. **GitHub secret**  
+   Repo → Settings → Secrets and variables → Actions:  
+   - Name: `AWS_DEPLOY_ROLE_ARN`  
+   - Value: the role ARN
+
+5. Push to `main` (or **Actions → Deploy → Run workflow**). CI should assume the role and deploy.
+
+Local `npm run deploy` keeps working alongside CI.
+
+### 6. Local development (optional)
+
+1. `npm run dev:api` — origin secret `dev-origin-secret`, `Authorization: Bearer dev` for `/api/me` when Cognito env is unset  
+2. `npm run dev:web` — `public/config.json` with `devAuth: true`  
+3. After a cloud deploy, copy Cognito IDs from stack outputs into `apps/web/public/config.json` and a root `.env` (see [`.env.example`](.env.example)) for real JWTs locally
 
 ### Useful commands
 
 | Command | Purpose |
 |---|---|
 | `npm run deploy` | Build web + deploy stack |
-| `npm run diff` | Show infra changes |
-| `npm run destroy` | Tear down the stack |
+| `npm run diff` | Show infra changes vs AWS |
+| `npm run destroy` | Tear down the app stack |
+| `npm run bootstrap` | CDK bootstrap (`CDKToolkit`) |
 | `npm run dev:api` | Local Express on `:3000` |
 | `npm run dev:web` | Local Angular on `:4200` (proxies `/api`) |
 
-### Local development
+## Architecture recap
 
-1. `npm run dev:api` — origin secret `dev-origin-secret`, `Authorization: Bearer dev` for `/api/me`
-2. `npm run dev:web` — uses `public/config.json` with `devAuth: true`
-
-After a cloud deploy, you can copy Cognito IDs from stack outputs into `apps/web/public/config.json` and into a root `.env` (see `.env.example`) to exercise real JWT locally.
-
-## Security model
+### Security model
 
 1. **Origin secret** — CloudFront sends `x-origin-verify`; Lambda rejects requests without it. Protects direct API Gateway/Lambda access.
 2. **User JWT** — Cognito ID tokens for protected routes (`/app`, `/api/me`).
 3. Public `/api/*` via your CloudFront domain remains callable (same as any public website API).
 
-## Optional database (Neon)
+### Optional database (Neon)
 
 See [packages/db/README.md](packages/db/README.md). Leave `DATABASE_URL` empty to keep in-memory dummy items.
 
-## Repo layout
+### Repo layout
 
 ```text
 apps/api      Express + serverless-http
 apps/web      Angular SPA
-infra         AWS CDK stack
+infra         AWS CDK app stack + iam/ docs for GHA role
 packages/db   Optional Prisma/Neon stub
 ```
 
@@ -75,23 +129,9 @@ packages/db   Optional Prisma/Neon stub
 
 | Workflow | When | What |
 |---|---|---|
-| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | PRs + pushes (except `main`) | `npm ci`, build, `cdk synth` |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | PRs + pushes (except `main`) | `npm ci`, build, `cdk synth` (no AWS creds) |
 | [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | Push to `main` + manual dispatch | OIDC → `npm run deploy` |
 
-Deploy targets **`us-east-1`** (same region as the existing `ServerlessTemplateStack`). `CDKToolkit` bootstrap must already exist there (`npm run bootstrap` once).
+`synth` only builds the CloudFormation template locally; it does not compare against the live stack (`diff` / `deploy` do).
 
-### One-time GitHub + AWS setup
-
-1. IAM OIDC provider: `https://token.actions.githubusercontent.com` (audience `sts.amazonaws.com`).
-2. IAM role trusted by GitHub OIDC for this repo/`main` (Console: Web identity → owner = your GitHub user, repo name, branch `main`).
-3. Attach deploy permissions (broad is fine to start; tighten later).
-4. GitHub repo → **Settings → Secrets and variables → Actions** → secret:
-   - `AWS_DEPLOY_ROLE_ARN` = role ARN
-
-Trust `sub` condition (GitHub includes numeric owner/repo IDs in the token — use a wildcard):
-
-```text
-repo:blimmbamm*/aws-serverless-template*:ref:refs/heads/main
-```
-
-Local CLI deploy still works; CI is the default path for `main`.
+Chicken-and-egg: bootstrap + OIDC role must exist **before** the first CI deploy. Details: [New project from this template](#new-project-from-this-template) and [`infra/iam/README.md`](infra/iam/README.md).
